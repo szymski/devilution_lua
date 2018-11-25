@@ -1,6 +1,7 @@
 //HEADER_GOES_HERE
 
 #include "../types.h"
+#include "api.h"
 
 int light_table_index; // weak
 int screen_y_times_768[1024];
@@ -428,16 +429,37 @@ void __fastcall DrawClippedPlayer(int pnum, int x, int y, int px, int py, unsign
 
 void __fastcall DrawView(int StartX, int StartY)
 {
+	lua_getglobal(L, "PreDrawGame");
+	api_call_function();
+
 	if (zoomflag)
 		DrawGame(StartX, StartY);
 	else
 		DrawZoom(StartX, StartY);
 
-	if (automapflag)
+	lua_getglobal(L, "PostDrawGame");
+	api_call_function();
+
+	if (automapflag) {
+		lua_getglobal(L, "PreDrawAutomap");
+		api_call_function();
+
 		DrawAutomap();
 
+		lua_getglobal(L, "PostDrawAutomap");
+		api_call_function();
+	}
+
 	if (invflag)
+	{
+		lua_getglobal(L, "PreDrawInventory");
+		api_call_function();
+
 		DrawInv();
+
+		lua_getglobal(L, "PostDrawInventory");
+		api_call_function();
+	}
 	else if (sbookflag)
 		DrawSpellBook();
 

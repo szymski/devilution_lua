@@ -229,6 +229,9 @@
     <ClCompile Include="3rdParty\PKWare\implode.cpp">
       <Filter>PKWare</Filter>
     </ClCompile>
+    <ClCompile Include="Source\api.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Diablo.ico">
@@ -462,6 +465,9 @@
     </ClInclude>
     <ClInclude Include="3rdParty\PKWare\pkware.h">
       <Filter>PKWare</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\api.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

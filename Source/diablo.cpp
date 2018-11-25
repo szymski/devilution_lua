@@ -1,6 +1,7 @@
 //HEADER_GOES_HERE
 
 #include "../types.h"
+#include "api.h"
 
 int diablo_cpp_init_value; // weak
 HWND ghMainWnd;
@@ -167,6 +168,10 @@ void __fastcall run_game_loop(unsigned int uMsg)
 	drawpanflag = 255;
 	gbGameLoopStartup = 1;
 	nthread_ignore_mutex(0);
+
+	lua_getglobal(L, "OnStartGame");
+	api_call_function();
+
 	while (gbRunGame) {
 		diablo_color_cyc_logic();
 		if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
@@ -276,8 +281,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #endif
 	ghInst = hInst;
 
-	if(RestrictedTest())
-		ErrOkDlg(IDD_DIALOG10, 0, "C:\\Src\\Diablo\\Source\\DIABLO.CPP", 877);
+	//if(RestrictedTest())
+	//	ErrOkDlg(IDD_DIALOG10, 0, "C:\\Src\\Diablo\\Source\\DIABLO.CPP", 877);
 	if(ReadOnlyTest()) {
 		if(!GetModuleFileName(ghInst, szFileName, sizeof(szFileName)))
 			szFileName[0] = '\0';
@@ -321,6 +326,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		}
 #endif
 
+		api_init();
 		mainmenu_loop();
 		UiDestroy();
 		SaveGamma();

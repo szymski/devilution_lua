@@ -14,7 +14,7 @@
     <SccProjectName />
     <SccLocalPath />
     <ProjectGuid>{23114A83-7D81-4F17-A6B8-2FC51F3D72F2}</ProjectGuid>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -44,6 +44,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.\Source/WinDebug\</OutDir>
     <IntDir>.\Source/WinDebug\</IntDir>
+    <IncludePath>F:\Github Projects\devilution\3rdParty\lua;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -120,7 +121,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OutputFile>.\Source/WinDebug\Diablo.exe</OutputFile>
-      <AdditionalDependencies>DiabloUI/WinDebug/DiabloUI.lib;3rdParty/Storm/Source/WinDebug/Storm.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DiabloUI/WinDebug/DiabloUI.lib;3rdParty/Storm/Source/WinDebug/Storm.lib;version.lib;3rdParty/lua/liblua.dll.a;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>false</DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -128,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="3rdParty\PKWare\explode.cpp" />
     <ClCompile Include="3rdParty\PKWare\implode.cpp" />
+    <ClCompile Include="Source\api.cpp" />
     <ClCompile Include="Source\appfat.cpp" />
     <ClCompile Include="Source\automap.cpp" />
     <ClCompile Include="Source\capture.cpp" />
@@ -208,6 +210,7 @@
     <ClInclude Include="defs.h" />
     <ClInclude Include="enums.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Source\api.h" />
     <ClInclude Include="Source\appfat.h" />
     <ClInclude Include="Source\automap.h" />
     <ClInclude Include="Source\capture.h" />
