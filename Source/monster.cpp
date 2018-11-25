@@ -1,6 +1,8 @@
 //HEADER_GOES_HERE
 
 #include "../types.h"
+#include "api.h"
+#include "api_types.h"
 
 // Tracks which missile files are already loaded
 int MissileFileFlag;
@@ -741,6 +743,8 @@ void __fastcall InitMonster(int i, int rd, int mtype, int x, int y)
 		monster[i].mArmorClass += 80;
 		monster[i].mMagicRes = monst->MData->mMagicRes2;
 	}
+
+	api_on_init_monster(i);
 }
 
 void __cdecl ClrAllMonsters()
@@ -1444,6 +1448,7 @@ void __fastcall SetMapMonsters(unsigned char *pMap, int startx, int starty)
 
 void __fastcall DeleteMonster(int i)
 {
+	api_on_delete_monster(i);
 	nummonsters--;
 	int temp = monstactive[nummonsters];
 	monstactive[nummonsters] = monstactive[i];

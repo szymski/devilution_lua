@@ -9,6 +9,9 @@ sol::state lua;
 
 std::vector<api_Timer> timer_list;
 std::vector<api_Timer> timers_to_add;
+std::chrono::time_point<ApiClock> start_time;
+
+std::unordered_map<std::string, std::unordered_map<std::string, sol::function>> hooks;
 
 void api_register_functions();
 void api_init_console();
@@ -52,6 +55,7 @@ void api_load_file(const char *filename)
 
 void api_init_timer()
 {
+	start_time = ApiClock::now();
 }
 
 void api_update_timers()
@@ -73,24 +77,21 @@ void api_update_timers()
 	timers_to_add.clear();
 }
 
-void api_call_function(const char *name)
+int api_last_monter_uid = 0;
+std::unordered_set<int> api_valid_monsters;
+std::unordered_map<int, int> api_monster_id_to_uid;
+
+void api_on_init_monster(int id)
 {
-	try {
-		sol::function f = lua[name];
-		if (f.valid())
-			f.call();
-	} catch (const sol::error &e) {
-		std::cout << "Lua error: " << e.what() << std::endl;
-	}
+	int uid = ++api_last_monter_uid;
+	api_valid_monsters.insert(uid);
+	api_monster_id_to_uid[id] = uid;
+	api_call_hook("InitMonster", api_MonsterStruct{ id, uid, monster[id] });
 }
 
-void api_call_function(sol::function f)
+void api_on_delete_monster(int id)
 {
-	try {
-		f.call();
-	} catch (const sol::error &e) {
-		std::cout << "Lua error: " << e.what() << std::endl;
-	}
+	api_valid_monsters.erase(api_monster_id_to_uid[id]);
 }
 
 #define REGISTER_ENUM(NAME) \
@@ -102,10 +103,28 @@ void api_register_functions()
 		std::cout << str << std::endl;
 	};
 
+	// Hook library
+
+	auto hook = lua.create_table();
+	lua["hook"] = hook;
+
+	hook["add"] = [](const char *hookname, const char *identifier, sol::function callback) {
+		hooks[hookname][identifier] = callback;
+	};
+
+	hook["remove"] = [](const char *hookname, const char *identifier) {
+		hooks[hookname].erase(identifier);
+	};
+
 	// Timer library
 
 	auto timer = lua.create_table();
 	lua["timer"] = timer;
+
+	timer["getTime"] = []() {
+		auto time = ApiClock::now() - start_time;
+		return std::chrono::duration_cast<std::chrono::milliseconds>(time).count() / 1000.0;
+	};
 
 	timer["simple"] = [](double delay, sol::function callback) {
 		api_Timer timer{ ApiClock::now() + std::chrono::milliseconds((long)(delay * 1000.0)), callback };
@@ -114,14 +133,24 @@ void api_register_functions()
 
 	// Player library
 
+	REGISTER_ENUM(PC_WARRIOR);
+	REGISTER_ENUM(PC_ROGUE);
+	REGISTER_ENUM(PC_SORCERER);
+
 	auto playerType = lua.new_usertype<api_PlayerStruct>("Player",
 	    "getName", &api_PlayerStruct::getName,
+	    "getClass", &api_PlayerStruct::getClass,
 
 	    "getHP", &api_PlayerStruct::getHP,
 	    "setHP", &api_PlayerStruct::setHP,
 
 	    "getGold", &api_PlayerStruct::getGold,
 	    "setGold", &api_PlayerStruct::setGold,
+
+		"getLevel", &api_PlayerStruct::getLevel,
+
+		"setPos", &api_PlayerStruct::setPos,
+	    "getPos", &api_PlayerStruct::getPos,
 
 	    "kill", &api_PlayerStruct::kill);
 
@@ -131,6 +160,34 @@ void api_register_functions()
 	player["getLocalPlayer"] = []() {
 		api_PlayerStruct ply{ myplr, plr[myplr] };
 		return ply;
+	};
+
+	// Monster library
+
+	auto monsterType = lua.new_usertype<api_MonsterStruct>("Monster",
+	    "getName", &api_MonsterStruct::getName,
+
+	    "getHP", &api_MonsterStruct::getHP,
+	    "setHP", &api_MonsterStruct::setHP,
+
+	    "getLevel", &api_MonsterStruct::getLevel,
+	    "setLevel", &api_MonsterStruct::setLevel,
+
+	    "getPos", &api_MonsterStruct::getPos,
+	    "setPos", &api_MonsterStruct::setPos,
+
+	    "kill", &api_MonsterStruct::kill);
+
+	auto monsterTbl = lua.create_table();
+	lua["monster"] = monsterTbl;
+
+	monsterTbl["spawn"] = [](double x, double y, double dir, double type, bool inMap) -> sol::optional<api_MonsterStruct>
+	{
+		int i = AddMonster(x, y, dir, type, inMap);
+		if (i > 0)
+			return sol::make_optional(api_MonsterStruct{i, api_monster_id_to_uid[i], monster[i]});
+
+		return sol::optional<api_MonsterStruct>();
 	};
 
 	// Mouse library
@@ -157,10 +214,6 @@ void api_register_functions()
 
 	auto level = lua.create_table();
 	lua["level"] = level;
-
-	level["getType"] = []() {
-		return leveltype;
-	};
 
 	// Draw library
 

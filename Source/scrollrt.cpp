@@ -435,20 +435,20 @@ void __fastcall DrawView(int StartX, int StartY)
 		DrawZoom(StartX, StartY);
 
 	if (automapflag) {
-		api_call_function("PreDrawAutomap");
+		api_call_hook("PreDrawAutomap");
 
 		DrawAutomap();
 
-		api_call_function("PostDrawAutomap");
+		api_call_hook("PostDrawAutomap");
 	}
 
 	if (invflag)
 	{
-		api_call_function("PreDrawInventory");
+		api_call_hook("PreDrawInventory");
 
 		DrawInv();
 
-		api_call_function("PostDrawInventory");
+		api_call_hook("PostDrawInventory");
 	}
 	else if (sbookflag)
 		DrawSpellBook();
@@ -3013,12 +3013,12 @@ void __cdecl DrawAndBlit()
 		}
 		drawpanflag = 0;
 		j_lock_buf_priv(0);
-		api_call_function("PreDrawGame");
+		api_call_hook("PreDrawGame");
 		if (leveltype)
 			DrawView(ViewX, ViewY);
 		else
 			T_DrawView(ViewX, ViewY);
-		api_call_function("PostDrawGame");
+		api_call_hook("PostDrawGame");
 		if (ctrlPan)
 			ClearCtrlPan();
 		if (drawhpflag)

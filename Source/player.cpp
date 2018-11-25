@@ -1,6 +1,8 @@
 //HEADER_GOES_HERE
 
 #include "../types.h"
+#include "api.h"
+#include "api_types.h"
 
 int plr_lframe_size;
 int plr_wframe_size;
@@ -1722,6 +1724,8 @@ void __fastcall StartPlayerKill(int pnum, int earflag)
 		}
 	}
 	SetPlayerHitPoints(pnum, 0);
+
+	api_call_hook("PlayerDie", api_PlayerStruct{ pnum, plr[pnum] });
 }
 
 void __fastcall PlrDeadItem(int pnum, struct ItemStruct *itm, int xx, int yy)
@@ -1985,6 +1989,8 @@ void __fastcall StartNewLvl(int pnum, int fom, int lvl)
 			NetSendCmdParam2(TRUE, CMD_NEWLVL, fom, lvl);
 		}
 	}
+
+	api_call_hook("LevelChange", api_PlayerStruct{ pnum, plr[pnum] }, lvl);
 }
 void __fastcall RestartTownLvl(int pnum)
 {
@@ -2008,6 +2014,8 @@ void __fastcall RestartTownLvl(int pnum)
 		plr[pnum]._pInvincible = TRUE;
 		PostMessage(ghMainWnd, WM_DIABRETOWN, 0, 0);
 	}
+
+	api_call_hook("LevelChange", api_PlayerStruct{ pnum, plr[pnum] }, 0);
 }
 
 void __fastcall StartWarpLvl(int pnum, int pidx)
@@ -2028,6 +2036,8 @@ void __fastcall StartWarpLvl(int pnum, int pidx)
 		plr[pnum]._pInvincible = TRUE;
 		PostMessage(ghMainWnd, WM_DIABWARPLVL, 0, 0);
 	}
+
+	api_call_hook("LevelChange", api_PlayerStruct{ pnum, plr[pnum] }, portal[pidx].level);
 }
 
 BOOL __fastcall PM_DoStand(int pnum)
@@ -2967,6 +2977,14 @@ void __fastcall CheckNewPath(int pnum)
 				xvel3 = 2048;
 				xvel = 1024;
 				yvel = 512;
+			}
+
+			auto obj = api_call_hook_return("SetPlayerSpeed", api_PlayerStruct{ pnum, plr[pnum] });
+			if (obj.valid()) {
+				int baseVel = obj.as<int>();
+				xvel3 = baseVel * 4;
+				xvel = baseVel * 2;
+				yvel = baseVel;
 			}
 
 			switch (plr[pnum].walkpath[0]) {

@@ -169,7 +169,7 @@ void __fastcall run_game_loop(unsigned int uMsg)
 	gbGameLoopStartup = 1;
 	nthread_ignore_mutex(0);
 
-	api_call_function("OnStartGame");
+	api_call_hook("StartGame");
 
 	while (gbRunGame) {
 		diablo_color_cyc_logic();
@@ -1979,7 +1979,7 @@ void __cdecl game_logic()
 			drawpanflag |= 1u;
 		} else {
 			api_update_timers();
-			api_call_function("Tick");
+			api_call_hook("Tick");
 
 			if (!gmenu_exception() && sgnTimeoutCurs == CURSOR_NONE) {
 				CheckCursMove();
