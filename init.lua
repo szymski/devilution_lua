@@ -11,14 +11,13 @@ function PostDrawGame()
         return
     end
 
-    draw.printGameStr(5, 15, "Lua API Test", COL_GOLD)
+    draw.printGameStr(5, 15, "Lua API Test", COL_WHITE)
     draw.printGameStr(5, 35, level.getType() == DTYPE_TOWN and "Town" or "Not town", COL_WHITE)
     
     local x, y = mouse.getPos()
     draw.printGameStr(5, 55, "" .. x .. " " .. y, COL_BLUE)
 
-    draw.printGameStr(5, 75, myPly:getName(), COL_RED)
-    draw.printGameStr(5, 95, "" .. myPly:getHP(), COL_RED)
+    draw.printGameStr(5, 75, "Gold: " .. myPly:getGold(), COL_GOLD)
 
     a = a + 1
 
@@ -30,5 +29,22 @@ function Tick()
         return
     end
 
-    myPly:setHP(myPly:getHP() + 1)
+    if myPly:getGold() == 50 then
+        local ply = myPly
+        myPly = nil
+
+        timer.simple(2, function()
+            msg("2")
+            
+        end)
+
+        timer.simple(1, function()
+            msg("1")
+
+            timer.simple(2, function()
+                msg("3")
+                ply:kill()
+            end)
+        end)
+    end
 end

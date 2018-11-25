@@ -1978,6 +1978,7 @@ void __cdecl game_logic()
 		if (gbMaxPlayers == 1 && gmenu_exception()) {
 			drawpanflag |= 1u;
 		} else {
+			api_update_timers();
 			api_call_function("Tick");
 
 			if (!gmenu_exception() && sgnTimeoutCurs == CURSOR_NONE) {
