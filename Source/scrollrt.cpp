@@ -429,36 +429,26 @@ void __fastcall DrawClippedPlayer(int pnum, int x, int y, int px, int py, unsign
 
 void __fastcall DrawView(int StartX, int StartY)
 {
-	lua_getglobal(L, "PreDrawGame");
-	api_call_function();
-
 	if (zoomflag)
 		DrawGame(StartX, StartY);
 	else
 		DrawZoom(StartX, StartY);
 
-	lua_getglobal(L, "PostDrawGame");
-	api_call_function();
-
 	if (automapflag) {
-		lua_getglobal(L, "PreDrawAutomap");
-		api_call_function();
+		api_call_function("PreDrawAutomap");
 
 		DrawAutomap();
 
-		lua_getglobal(L, "PostDrawAutomap");
-		api_call_function();
+		api_call_function("PostDrawAutomap");
 	}
 
 	if (invflag)
 	{
-		lua_getglobal(L, "PreDrawInventory");
-		api_call_function();
+		api_call_function("PreDrawInventory");
 
 		DrawInv();
 
-		lua_getglobal(L, "PostDrawInventory");
-		api_call_function();
+		api_call_function("PostDrawInventory");
 	}
 	else if (sbookflag)
 		DrawSpellBook();
@@ -3023,10 +3013,12 @@ void __cdecl DrawAndBlit()
 		}
 		drawpanflag = 0;
 		j_lock_buf_priv(0);
+		api_call_function("PreDrawGame");
 		if (leveltype)
 			DrawView(ViewX, ViewY);
 		else
 			T_DrawView(ViewX, ViewY);
+		api_call_function("PostDrawGame");
 		if (ctrlPan)
 			ClearCtrlPan();
 		if (drawhpflag)

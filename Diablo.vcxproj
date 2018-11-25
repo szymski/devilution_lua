@@ -44,7 +44,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.\Source/WinDebug\</OutDir>
     <IntDir>.\Source/WinDebug\</IntDir>
-    <IncludePath>F:\Github Projects\devilution\3rdParty\lua;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)3rdParty\lua;$(ProjectDir)3rdParty\sol;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

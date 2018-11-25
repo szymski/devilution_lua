@@ -169,8 +169,7 @@ void __fastcall run_game_loop(unsigned int uMsg)
 	gbGameLoopStartup = 1;
 	nthread_ignore_mutex(0);
 
-	lua_getglobal(L, "OnStartGame");
-	api_call_function();
+	api_call_function("OnStartGame");
 
 	while (gbRunGame) {
 		diablo_color_cyc_logic();
@@ -1979,6 +1978,8 @@ void __cdecl game_logic()
 		if (gbMaxPlayers == 1 && gmenu_exception()) {
 			drawpanflag |= 1u;
 		} else {
+			api_call_function("Tick");
+
 			if (!gmenu_exception() && sgnTimeoutCurs == CURSOR_NONE) {
 				CheckCursMove();
 				track_process();

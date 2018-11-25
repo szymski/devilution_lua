@@ -3,7 +3,27 @@
 
 #include <fcntl.h>
 
-lua_State *L;
+struct api_PlayerStruct {
+	int id;
+	PlayerStruct &ply;
+
+	const char *getName()
+	{
+		return ply._pName;
+	}
+
+	int getHP()
+	{
+		return ply._pHitPoints;
+	}
+
+	void setHP(double value)
+	{
+		SetPlayerHitPoints(id, value);
+	}
+};
+
+sol::state lua;
 
 void api_register_functions();
 
@@ -21,9 +41,7 @@ void api_init()
 
 	printf("Initializing Lua API\n");
 
-	L = luaL_newstate();
-	luaL_openlibs(L);
-	//lua_setglobal(L, "_G");
+	lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::string, sol::lib::table, sol::lib::os);
 
 	api_register_functions();
 
@@ -32,81 +50,80 @@ void api_init()
 
 void api_load_file(const char *filename)
 {
-	int status = luaL_loadfile(L, filename);
-	if (status)
-		printf("Couldn't load lua file: %s\n", lua_tostring(L, -1));
-
-	int result = lua_pcall(L, 0, 0, 0);
-	if (result)
-		printf("Lua error: %s\n", lua_tostring(L, -1));
-}
-
-void api_call_function()
-{
-	if (lua_isnil(L, -1)) {
-		lua_pop(L, 1);
-		return;
+	try {
+		auto result = lua.safe_script_file(filename);
+	} catch (const sol::error &e) {
+		std::cout << "Lua error: " << e.what() << std::endl;
 	}
-
-	int result = lua_pcall(L, 0, 0, 0);
-	if (result)
-		printf("Lua error: %s\n", lua_tostring(L, -1));
 }
 
-extern "C" int _cdecl l_msg(lua_State *L)
+void api_call_function(const char *name)
 {
-	const char *str = luaL_checkstring(L, 1);
-	printf("%s", str);
-	return 0;
-}
-
-extern "C" int _cdecl l_PlaySFX(lua_State *L)
-{
-	int id = luaL_checkinteger(L, 1);
-	PlaySFX(id);
-	return 0;
-}
-
-extern "C" int _cdecl l_PrintGameStr(lua_State *L)
-{
-	auto x = static_cast<int>(luaL_checknumber(L, 1));
-	auto y = static_cast<int>(luaL_checknumber(L, 2));
-	auto str = luaL_checkstring(L, 3);
-	auto color = luaL_checknumber(L, 4);
-
-	PrintGameStr(x, y, (char*)str, color);
-
-	return 0;
-}
-
-extern "C" int _cdecl l_DrawLine(lua_State *L)
-{
-	auto x0 = static_cast<int>(luaL_checknumber(L, 1));
-	auto y0 = static_cast<int>(luaL_checknumber(L, 2));
-	auto x1 = static_cast<int>(luaL_checknumber(L, 3));
-	auto y1 = static_cast<int>(luaL_checknumber(L, 4));
-	auto col = static_cast<int>(luaL_checknumber(L, 5));
-
-	DrawLine(x0, y0, x1, y1, col);
-
-	return 0;
+	try {
+		sol::function f = lua[name];
+		if (f.valid())
+			f.call();
+	} catch (const sol::error &e) {
+		std::cout << "Lua error: " << e.what() << std::endl;
+	}
 }
 
 #define REGISTER_ENUM(NAME) \
-	lua_pushnumber(L, NAME);   \
-	lua_setglobal(L, #NAME);
-
-#define REGISTER_FUNC(NAME)  \
-	lua_pushcfunction(L, l_ ## NAME); \
-	lua_setglobal(L, #NAME);
+	lua[#NAME] = (int)NAME
 
 void api_register_functions()
 {
-	REGISTER_FUNC(msg);
+	lua["msg"] = [](std::string str) {
+		std::cout << str << std::endl;
+	};
 
-	REGISTER_FUNC(PlaySFX);
+	// Player library
 
-	// Drawing
+	auto playerType = lua.new_usertype<api_PlayerStruct>("Player",
+	    "getName", &api_PlayerStruct::getName,
+
+	    "getHP", &api_PlayerStruct::getHP,
+	    "setHP", &api_PlayerStruct::setHP);
+
+	auto player = lua.create_table();
+	lua["player"] = player;
+
+	player["getLocalPlayer"] = []() {
+		api_PlayerStruct ply{ myplr, plr[myplr] };
+		return ply;
+	};
+
+	// Mouse library
+
+	auto mouse
+	    = lua.create_table();
+	lua["mouse"] = mouse;
+
+	mouse["getWorldPos"] = []() {
+		return std::make_tuple(cursmx, cursmy);
+	};
+
+	mouse["getPos"] = []() {
+		return std::make_tuple(MouseX, MouseY);
+	};
+
+	// Level library
+
+	REGISTER_ENUM(DTYPE_TOWN);
+	REGISTER_ENUM(DTYPE_CATHEDRAL);
+	REGISTER_ENUM(DTYPE_CATACOMBS);
+	REGISTER_ENUM(DTYPE_CAVES);
+	REGISTER_ENUM(DTYPE_HELL);
+	REGISTER_ENUM(DTYPE_NONE);
+
+	auto level = lua.create_table();
+	lua["level"] = level;
+
+	level["getType"] = []() {
+		return leveltype;
+	};
+
+	// Draw library
 
 	REGISTER_ENUM(COL_WHITE);
 	REGISTER_ENUM(COL_BLUE);
@@ -124,6 +141,13 @@ void api_register_functions()
 	REGISTER_ENUM(PAL16_RED);
 	REGISTER_ENUM(PAL16_GRAY);
 
-	REGISTER_FUNC(PrintGameStr);
-	REGISTER_FUNC(DrawLine);
+	auto draw = lua.create_table();
+	lua["draw"] = draw;
+
+	draw["printGameStr"] = [](double x, double y, const char *str, double color) {
+		PrintGameStr(x, y, (char *)str, color);
+	};
+	draw["drawLine"] = [](double x0, double y0, double x1, double y1, double color) {
+		DrawLine(x0, y0, x1, y1, color);
+	};
 }
