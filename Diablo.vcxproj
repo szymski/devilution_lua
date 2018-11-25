@@ -207,6 +207,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rdParty\PKWare\pkware.h" />
+    <ClInclude Include="Source\api_types.h" />
     <ClInclude Include="defs.h" />
     <ClInclude Include="enums.h" />
     <ClInclude Include="resource.h" />

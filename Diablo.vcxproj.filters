@@ -469,5 +469,8 @@
     <ClInclude Include="Source\api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\api_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
