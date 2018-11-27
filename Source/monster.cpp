@@ -2113,6 +2113,11 @@ void __fastcall MonstStartKill(int i, int pnum, BOOL sendmsg)
 	M_FallenFear(monster[i]._mx, monster[i]._my);
 	if (monster[i].MType->mtype >= MT_NACID && monster[i].MType->mtype <= MT_XACID)
 		AddMissile(monster[i]._mx, monster[i]._my, 0, 0, 0, MIS_ACIDPUD, 1, i, monster[i]._mint + 1, 0);
+
+	if (pnum >= 0 && pnum < MAX_PLRS)
+		api_call_hook("MonsterKill", api_get_monster(i), api_get_player(pnum));
+	else
+		api_call_hook("MonsterKill", api_get_monster(i));
 }
 
 void __fastcall M2MStartKill(int i, int mid)

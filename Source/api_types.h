@@ -17,6 +17,12 @@ struct api_PlayerStruct {
 	int id;
 	PlayerStruct &ply;
 
+	api_PlayerStruct(int id, PlayerStruct &ply)
+	    : id(id)
+	    , ply(ply)
+	{
+	}
+
 	const char *getName()
 	{
 		return ply._pName;
@@ -35,6 +41,11 @@ struct api_PlayerStruct {
 	void setHP(double value)
 	{
 		SetPlayerHitPoints(id, value);
+	}
+
+	int getMaxHP()
+	{
+		return ply._pMaxHP;
 	}
 
 	int getGold()
@@ -72,8 +83,14 @@ struct api_PlayerStruct {
 
 struct api_MonsterStruct {
 	int id;
-	int uid;
 	MonsterStruct &monster;
+	bool valid = true;
+
+	api_MonsterStruct(int id, MonsterStruct &monster)
+	    : id(id)
+	    , monster(monster)
+	{
+	}
 
 	void assertValid()
 	{
@@ -83,7 +100,7 @@ struct api_MonsterStruct {
 
 	bool isValid()
 	{
-		return api_valid_monsters.find(uid) != api_valid_monsters.end();
+		return valid;
 	}
 
 	const char *getName()

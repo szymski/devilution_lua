@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 extern int api_last_monter_uid;
-extern std::unordered_set<int> api_valid_monsters;
+extern std::unordered_set<int> api_valid_monsters_uid;
 extern std::unordered_map<int, int> api_monster_id_to_uid;
 
 extern sol::state lua;
@@ -24,10 +24,12 @@ sol::object api_call_hook_return(const char *name, Args... args)
 {
 	auto hooksCopy = hooks[name];
 
+	// TODO: Runtime error on lua error
+
 	sol::object obj;
 
 	for (auto pair : hooksCopy) {
-		obj = api_call_function<sol::object>(pair.second, args...);
+		obj = api_call_function_return<sol::object>(pair.second, args...);
 		if (obj.valid())
 			return obj;
 	}
@@ -46,13 +48,14 @@ void api_call_hook(const char *name, Args... args)
 }
 
 template <typename T, typename... Args>
-T api_call_function(sol::function f, Args... args)
+T api_call_function_return(sol::function f, Args... args)
 {
 	try {
 		std::function<sol::object(Args...)> callback = f;
 		return callback(args...);
 	} catch (const sol::error &e) {
 		std::cout << "Lua error: " << e.what() << std::endl;
+		return sol::object();
 	}
 }
 
@@ -67,8 +70,10 @@ void api_call_function(sol::function f, Args... args)
 	}
 }
 
-void api_on_init_monster(int id);
+sol::object api_get_player(int id);
 
+void api_on_init_monster(int id);
+sol::object api_get_monster(int id);
 void api_on_delete_monster(int id);
 
 #endif

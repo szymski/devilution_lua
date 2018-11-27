@@ -1,6 +1,7 @@
 //HEADER_GOES_HERE
 
 #include "../types.h"
+#include "api.h"
 
 int itemactive[MAXITEMS];
 int uitemflag;
@@ -4001,9 +4002,12 @@ void __fastcall UseItem(int p, int Mid, int spl)
 {
 	int l, j;
 
+	int prevHp = plr[p]._pHitPoints;
+	int prevHpBase = plr[p]._pHPBase;
+
 	switch (Mid) {
 	case IMISC_HEAL:
-	case IMISC_HEAL_1C:
+	case IMISC_HEAL_1C: {
 		j = plr[p]._pMaxHP >> 8;
 		l = ((j >> 1) + random(39, j)) << 6;
 		if (plr[p]._pClass == PC_WARRIOR)
@@ -4016,13 +4020,29 @@ void __fastcall UseItem(int p, int Mid, int spl)
 		plr[p]._pHPBase += l;
 		if (plr[p]._pHPBase > plr[p]._pMaxHPBase)
 			plr[p]._pHPBase = plr[p]._pMaxHPBase;
+
+		// Run a hook and prevent healing if returned false
+		auto result = api_call_hook_return("UseHealthPotion", api_get_player(p), prevHp, prevHpBase, plr[p]._pHitPoints, plr[p]._pHPBase);
+		if (result.is<bool>() && !result.as<bool>()) {
+			plr[p]._pHPBase = prevHpBase;
+			plr[p]._pHitPoints = prevHp;
+		}
+
 		drawhpflag = TRUE;
-		break;
-	case IMISC_FULLHEAL:
+	} break;
+	case IMISC_FULLHEAL: {
 		plr[p]._pHitPoints = plr[p]._pMaxHP;
 		plr[p]._pHPBase = plr[p]._pMaxHPBase;
+
+		// Run a hook and prevent healing if returned false
+		auto result = api_call_hook_return("UseHealthPotion", api_get_player(p), prevHp, prevHpBase, plr[p]._pHitPoints, plr[p]._pHPBase);
+		if (result.is<bool>() && !result.as<bool>()) {
+			plr[p]._pHPBase = prevHpBase;
+			plr[p]._pHitPoints = prevHp;
+		}
+
 		drawhpflag = TRUE;
-		break;
+	} break;
 	case IMISC_MANA:
 		j = plr[p]._pMaxMana >> 8;
 		l = ((j >> 1) + random(40, j)) << 6;

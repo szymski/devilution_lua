@@ -1725,7 +1725,7 @@ void __fastcall StartPlayerKill(int pnum, int earflag)
 	}
 	SetPlayerHitPoints(pnum, 0);
 
-	api_call_hook("PlayerDie", api_PlayerStruct{ pnum, plr[pnum] });
+	api_call_hook("PlayerDie", api_get_player(pnum));
 }
 
 void __fastcall PlrDeadItem(int pnum, struct ItemStruct *itm, int xx, int yy)
@@ -1990,7 +1990,7 @@ void __fastcall StartNewLvl(int pnum, int fom, int lvl)
 		}
 	}
 
-	api_call_hook("LevelChange", api_PlayerStruct{ pnum, plr[pnum] }, lvl);
+	api_call_hook("LevelChange", api_get_player(pnum), lvl);
 }
 void __fastcall RestartTownLvl(int pnum)
 {
@@ -2015,7 +2015,7 @@ void __fastcall RestartTownLvl(int pnum)
 		PostMessage(ghMainWnd, WM_DIABRETOWN, 0, 0);
 	}
 
-	api_call_hook("LevelChange", api_PlayerStruct{ pnum, plr[pnum] }, 0);
+	api_call_hook("LevelChange", api_get_player(pnum), 0);
 }
 
 void __fastcall StartWarpLvl(int pnum, int pidx)
@@ -2037,7 +2037,7 @@ void __fastcall StartWarpLvl(int pnum, int pidx)
 		PostMessage(ghMainWnd, WM_DIABWARPLVL, 0, 0);
 	}
 
-	api_call_hook("LevelChange", api_PlayerStruct{ pnum, plr[pnum] }, portal[pidx].level);
+	api_call_hook("LevelChange", api_get_player(pnum), portal[pidx].level);
 }
 
 BOOL __fastcall PM_DoStand(int pnum)
@@ -2979,7 +2979,7 @@ void __fastcall CheckNewPath(int pnum)
 				yvel = 512;
 			}
 
-			auto obj = api_call_hook_return("SetPlayerSpeed", api_PlayerStruct{ pnum, plr[pnum] });
+			auto obj = api_call_hook_return("SetPlayerSpeed", api_get_player(pnum));
 			if (obj.valid()) {
 				int baseVel = obj.as<int>();
 				xvel3 = baseVel * 4;

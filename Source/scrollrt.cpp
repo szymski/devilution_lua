@@ -480,12 +480,16 @@ void __fastcall DrawView(int StartX, int StartY)
 	else if (PauseMode)
 		gmenu_draw_pause();
 
+	api_call_hook("PreDrawGui");
+
 	DrawPlrMsg();
 	gmenu_draw();
 	doom_draw();
 	DrawInfoBox();
 	DrawLifeFlask();
 	DrawManaFlask();
+
+	api_call_hook("PostDrawGui");
 }
 // 4B84DC: using guessed type int dropGoldFlag;
 // 4B8968: using guessed type int sbookflag;

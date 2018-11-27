@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <fcntl.h>
+#include <map>
 
 sol::state lua;
 
@@ -77,21 +78,51 @@ void api_update_timers()
 	timers_to_add.clear();
 }
 
-int api_last_monter_uid = 0;
-std::unordered_set<int> api_valid_monsters;
-std::unordered_map<int, int> api_monster_id_to_uid;
+std::unordered_map<int, sol::object> api_players;
+
+sol::object api_get_player(int id)
+{
+	auto it = api_players.find(id);
+	if (it != api_players.end())
+		return it->second;
+
+	auto p = sol::make_object(lua, new api_PlayerStruct(id, plr[id]));
+	api_players[id] = p;
+
+	return p;
+}
+
+std::unordered_map<int, sol::object> api_monsters;
 
 void api_on_init_monster(int id)
 {
-	int uid = ++api_last_monter_uid;
-	api_valid_monsters.insert(uid);
-	api_monster_id_to_uid[id] = uid;
-	api_call_hook("InitMonster", api_MonsterStruct{ id, uid, monster[id] });
+	auto apiMonster = new api_MonsterStruct(id, monster[id]);
+	auto monsterObj = sol::make_object(lua, apiMonster);
+
+	api_monsters[id] = monsterObj;
+
+	api_call_hook("InitMonster", monsterObj);
+}
+
+sol::object api_get_monster(int id)
+{
+	auto it = api_monsters.find(id);
+	if (it != api_monsters.end())
+		return it->second;
+
+	throw std::runtime_error("Monster not registered before using.");
 }
 
 void api_on_delete_monster(int id)
 {
-	api_valid_monsters.erase(api_monster_id_to_uid[id]);
+	auto it = api_monsters.find(id);
+	if (it != api_monsters.end()) {
+		auto obj = (*it).second;
+		auto monster = obj.as<api_MonsterStruct *>();
+		delete monster;
+		// TODO: Call to invalid pointer.
+		api_monsters.erase(it);
+	}
 }
 
 #define REGISTER_ENUM(NAME) \
@@ -144,12 +175,14 @@ void api_register_functions()
 	    "getHP", &api_PlayerStruct::getHP,
 	    "setHP", &api_PlayerStruct::setHP,
 
+	    "getMaxHP", &api_PlayerStruct::getMaxHP,
+
 	    "getGold", &api_PlayerStruct::getGold,
 	    "setGold", &api_PlayerStruct::setGold,
 
-		"getLevel", &api_PlayerStruct::getLevel,
+	    "getLevel", &api_PlayerStruct::getLevel,
 
-		"setPos", &api_PlayerStruct::setPos,
+	    "setPos", &api_PlayerStruct::setPos,
 	    "getPos", &api_PlayerStruct::getPos,
 
 	    "kill", &api_PlayerStruct::kill);
@@ -158,8 +191,7 @@ void api_register_functions()
 	lua["player"] = player;
 
 	player["getLocalPlayer"] = []() {
-		api_PlayerStruct ply{ myplr, plr[myplr] };
-		return ply;
+		return api_get_player(myplr);
 	};
 
 	// Monster library
@@ -181,13 +213,21 @@ void api_register_functions()
 	auto monsterTbl = lua.create_table();
 	lua["monster"] = monsterTbl;
 
-	monsterTbl["spawn"] = [](double x, double y, double dir, double type, bool inMap) -> sol::optional<api_MonsterStruct>
-	{
+	monsterTbl["spawn"] = [](double x, double y, double dir, double type, bool inMap) -> sol::object {
 		int i = AddMonster(x, y, dir, type, inMap);
 		if (i > 0)
-			return sol::make_optional(api_MonsterStruct{i, api_monster_id_to_uid[i], monster[i]});
+			return api_get_monster(i);
 
-		return sol::optional<api_MonsterStruct>();
+		return sol::nil;
+	};
+
+	monsterTbl["getAll"] = []() {
+		std::vector<sol::object> result;
+
+		for (auto id : api_monsters)
+			result.push_back(api_get_monster(id.first));
+
+		return sol::as_table(result);
 	};
 
 	// Mouse library
@@ -239,7 +279,100 @@ void api_register_functions()
 	draw["printGameStr"] = [](double x, double y, const char *str, double color) {
 		PrintGameStr(x, y, (char *)str, color);
 	};
+
 	draw["drawLine"] = [](double x0, double y0, double x1, double y1, double color) {
 		DrawLine(x0, y0, x1, y1, color);
+	};
+
+	draw["drawRect"] = [](double x_, double y_, double w, double h, double color) {
+		for (int y = y_; y < min(480, y_ + h); y++) {
+			for (int x = x_; x < min(640, x_ + w); x++) {
+				gpBuffer->row[y].pixels[x] = color;
+			}
+		}
+	};
+
+	// Item library
+
+	REGISTER_ENUM(ITYPE_0E);
+	REGISTER_ENUM(ITYPE_AMULET);
+	REGISTER_ENUM(ITYPE_AXE);
+	REGISTER_ENUM(ITYPE_BOW);
+	REGISTER_ENUM(ITYPE_GOLD);
+	REGISTER_ENUM(ITYPE_HARMOR);
+	REGISTER_ENUM(ITYPE_HELM);
+	REGISTER_ENUM(ITYPE_LARMOR);
+	REGISTER_ENUM(ITYPE_MACE);
+	REGISTER_ENUM(ITYPE_MARMOR);
+	REGISTER_ENUM(ITYPE_MISC);
+	REGISTER_ENUM(ITYPE_RING);
+	REGISTER_ENUM(ITYPE_SHIELD);
+	REGISTER_ENUM(ITYPE_STAFF);
+	REGISTER_ENUM(ITYPE_SWORD);
+
+	REGISTER_ENUM(IMISC_NONE);
+	REGISTER_ENUM(IMISC_USEFIRST);
+	REGISTER_ENUM(IMISC_FULLHEAL);
+	REGISTER_ENUM(IMISC_HEAL);
+	REGISTER_ENUM(IMISC_OLDHEAL);
+	REGISTER_ENUM(IMISC_DEADHEAL);
+	REGISTER_ENUM(IMISC_MANA);
+	REGISTER_ENUM(IMISC_FULLMANA);
+	REGISTER_ENUM(IMISC_POTEXP);
+	REGISTER_ENUM(IMISC_POTFORG);
+	REGISTER_ENUM(IMISC_ELIXSTR);
+	REGISTER_ENUM(IMISC_ELIXMAG);
+	REGISTER_ENUM(IMISC_ELIXDEX);
+	REGISTER_ENUM(IMISC_ELIXVIT);
+	REGISTER_ENUM(IMISC_ELIXWEAK);
+	REGISTER_ENUM(IMISC_ELIXDIS);
+	REGISTER_ENUM(IMISC_ELIXCLUM);
+	REGISTER_ENUM(IMISC_ELIXSICK);
+	REGISTER_ENUM(IMISC_REJUV);
+	REGISTER_ENUM(IMISC_FULLREJUV);
+	REGISTER_ENUM(IMISC_USELAST);
+	REGISTER_ENUM(IMISC_SCROLL);
+	REGISTER_ENUM(IMISC_SCROLLT);
+	REGISTER_ENUM(IMISC_STAFF);
+	REGISTER_ENUM(IMISC_BOOK);
+	REGISTER_ENUM(IMISC_RING);
+	REGISTER_ENUM(IMISC_AMULET);
+	REGISTER_ENUM(IMISC_UNIQUE);
+	REGISTER_ENUM(IMISC_HEAL_1C);
+	REGISTER_ENUM(IMISC_OILFIRST);
+	REGISTER_ENUM(IMISC_OILOF);
+	REGISTER_ENUM(IMISC_OILACC);
+	REGISTER_ENUM(IMISC_OILMAST);
+	REGISTER_ENUM(IMISC_OILSHARP);
+	REGISTER_ENUM(IMISC_OILDEATH);
+	REGISTER_ENUM(IMISC_OILSKILL);
+	REGISTER_ENUM(IMISC_OILBSMTH);
+	REGISTER_ENUM(IMISC_OILFORT);
+	REGISTER_ENUM(IMISC_OILPERM);
+	REGISTER_ENUM(IMISC_OILHARD);
+	REGISTER_ENUM(IMISC_OILIMP);
+	REGISTER_ENUM(IMISC_OILLAST);
+	REGISTER_ENUM(IMISC_MAPOFDOOM);
+	REGISTER_ENUM(IMISC_EAR);
+	REGISTER_ENUM(IMISC_SPECELIX);
+
+	auto item = lua.create_table();
+	lua["item"] = item;
+
+	item["dropRandomItem"] = [](double x, double y, sol::optional<bool> onlyGood) {
+		CreateRndItem(x, y, onlyGood.value_or(false), false, 0);
+	};
+
+	item["dropRandomItemType"] = [](double x, double y, double type, sol::optional<double> miscId, double level, sol::optional<bool> onlyGood) {
+		if (numitems < MAXITEMS) {
+			int ii = itemavail[0];
+			GetSuperItemSpace(x, y, ii);
+			itemactive[numitems] = ii;
+			itemavail[0] = itemavail[MAXITEMS - numitems - 1];
+
+			SetupAllItems(ii, RndTypeItems(type, miscId.value_or(-1)), GetRndSeed(), level, 1, onlyGood.value_or(false), 0, 0);
+
+			++numitems;
+		}
 	};
 }
