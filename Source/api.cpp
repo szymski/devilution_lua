@@ -25,7 +25,7 @@ void api_init()
 
 	printf("Initializing Lua API\n");
 
-	lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::string, sol::lib::table, sol::lib::os);
+	lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::jit, sol::lib::math, sol::lib::table, sol::lib::os, sol::lib::package, sol::lib::utf8);
 
 	api_register_functions();
 
@@ -174,8 +174,11 @@ void api_register_functions()
 
 	    "getHP", &api_PlayerStruct::getHP,
 	    "setHP", &api_PlayerStruct::setHP,
-
 	    "getMaxHP", &api_PlayerStruct::getMaxHP,
+
+	    "getMana", &api_PlayerStruct::getMana,
+	    "setMana", &api_PlayerStruct::setMana,
+	    "getMaxMana", &api_PlayerStruct::getMaxMana,
 
 	    "getGold", &api_PlayerStruct::getGold,
 	    "setGold", &api_PlayerStruct::setGold,
@@ -276,8 +279,8 @@ void api_register_functions()
 	auto draw = lua.create_table();
 	lua["draw"] = draw;
 
-	draw["printGameStr"] = [](double x, double y, const char *str, double color) {
-		PrintGameStr(x, y, (char *)str, color);
+	draw["printGameStr"] = [](double x, double y, const char *str, sol::optional<double> color) {
+		PrintGameStr(x, y, (char *)str, color.value_or(COL_WHITE));
 	};
 
 	draw["drawLine"] = [](double x0, double y0, double x1, double y1, double color) {
@@ -285,8 +288,16 @@ void api_register_functions()
 	};
 
 	draw["drawRect"] = [](double x_, double y_, double w, double h, double color) {
-		for (int y = y_; y < min(480, y_ + h); y++) {
-			for (int x = x_; x < min(640, x_ + w); x++) {
+		for (int y = max(0, y_); y < min(480, y_ + h); y++) {
+			for (int x = max(0, x_); x < min(640, x_ + w); x++) {
+				gpBuffer->row[y].pixels[x] = color;
+			}
+		}
+	};
+
+	draw["drawRectTransparent"] = [](double x_, double y_, double w, double h, double color) {
+		for (int y = max(0, y_); y < min(480, y_ + h); y++) {
+			for (int x = max(0, x_) + y % 2; x < min(640, x_ + w); x += 2) {
 				gpBuffer->row[y].pixels[x] = color;
 			}
 		}
@@ -309,6 +320,7 @@ void api_register_functions()
 	REGISTER_ENUM(ITYPE_SHIELD);
 	REGISTER_ENUM(ITYPE_STAFF);
 	REGISTER_ENUM(ITYPE_SWORD);
+	REGISTER_ENUM(ITYPE_API_CUSTOM);
 
 	REGISTER_ENUM(IMISC_NONE);
 	REGISTER_ENUM(IMISC_USEFIRST);
@@ -355,6 +367,7 @@ void api_register_functions()
 	REGISTER_ENUM(IMISC_MAPOFDOOM);
 	REGISTER_ENUM(IMISC_EAR);
 	REGISTER_ENUM(IMISC_SPECELIX);
+	REGISTER_ENUM(IMISC_API_CUSTOM);
 
 	auto item = lua.create_table();
 	lua["item"] = item;

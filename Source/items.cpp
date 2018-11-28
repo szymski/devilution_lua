@@ -304,7 +304,7 @@ const UItemStruct UniqueItemList[91] = {
 
 /* data */
 
-ItemDataStruct AllItemsList[157] = {
+ItemDataStruct AllItemsList[158] = {
 	// clang-format off
 	// iRnd,          iClass,        iLoc,             iCurs,                         itype, iItemId,            iName,                         iSName, iMinMLvl, iDurability, iMinDam, iMaxDam, iMinAC, iMaxAC, iMinStr, iMinMag, iMinDex, iFlags,            iMiscId,         iSpell,          iUsable, iValue, iMaxValue
 	{  IDROP_REGULAR, ICLASS_GOLD,   ILOC_UNEQUIPABLE, ICURS_GOLD,                       11, UITYPE_NONE,        "Gold",                        NULL,          1,           0,       0,       0,      0,      0,       0,       0,       0, ISPL_NONE,         IMISC_NONE,      SPL_NULL,        TRUE,         0,         0 },
@@ -463,6 +463,7 @@ ItemDataStruct AllItemsList[157] = {
 	{  IDROP_REGULAR, ICLASS_MISC,   ILOC_RING,        ICURS_RING,                       12, UITYPE_RING,        "Ring",                        "Ring",       15,           0,       0,       0,      0,      0,       0,       0,       0, ISPL_NONE,         IMISC_RING,      SPL_NULL,        FALSE,     1000,      1000 },
 	{  IDROP_REGULAR, ICLASS_MISC,   ILOC_AMULET,      ICURS_AMULET,                     13, UITYPE_AMULET,      "Amulet",                      "Amulet",      8,           0,       0,       0,      0,      0,       0,       0,       0, ISPL_NONE,         IMISC_AMULET,    SPL_NULL,        FALSE,     1200,      1200 },
 	{  IDROP_REGULAR, ICLASS_MISC,   ILOC_AMULET,      ICURS_AMULET,                     13, UITYPE_AMULET,      "Amulet",                      "Amulet",     16,           0,       0,       0,      0,      0,       0,       0,       0, ISPL_NONE,         IMISC_AMULET,    SPL_NULL,        FALSE,     1200,      1200 },
+	{  IDROP_NEVER,   ICLASS_API_CUSTOM,   ILOC_INVALID,     ICURS_API_CUSTOM,         0, UITYPE_API_CUSTOM,        NULL,                          NULL,          0,           0,       0,       0,      0,      0,       0,       0,       0, ISPL_NONE,         IMISC_NONE,      SPL_NULL,        FALSE,        0,         0 },
 	{  IDROP_NEVER,   ICLASS_NONE,   ILOC_INVALID,     ICURS_POTION_OF_FULL_MANA,         0, UITYPE_NONE,        NULL,                          NULL,          0,           0,       0,       0,      0,      0,       0,       0,       0, ISPL_NONE,         IMISC_NONE,      SPL_NULL,        FALSE,        0,         0 }
 	// clang-format on
 };
@@ -4005,6 +4006,9 @@ void __fastcall UseItem(int p, int Mid, int spl)
 	int prevHp = plr[p]._pHitPoints;
 	int prevHpBase = plr[p]._pHPBase;
 
+	int prevMana = plr[p]._pMana;
+	int prevManaBase = plr[p]._pManaBase;
+
 	switch (Mid) {
 	case IMISC_HEAL:
 	case IMISC_HEAL_1C: {
@@ -4022,7 +4026,7 @@ void __fastcall UseItem(int p, int Mid, int spl)
 			plr[p]._pHPBase = plr[p]._pMaxHPBase;
 
 		// Run a hook and prevent healing if returned false
-		auto result = api_call_hook_return("UseHealthPotion", api_get_player(p), prevHp, prevHpBase, plr[p]._pHitPoints, plr[p]._pHPBase);
+		auto result = api_call_hook_return("UseHealthPotion", api_get_player(p), prevHp, plr[p]._pHitPoints);
 		if (result.is<bool>() && !result.as<bool>()) {
 			plr[p]._pHPBase = prevHpBase;
 			plr[p]._pHitPoints = prevHp;
@@ -4035,7 +4039,7 @@ void __fastcall UseItem(int p, int Mid, int spl)
 		plr[p]._pHPBase = plr[p]._pMaxHPBase;
 
 		// Run a hook and prevent healing if returned false
-		auto result = api_call_hook_return("UseHealthPotion", api_get_player(p), prevHp, prevHpBase, plr[p]._pHitPoints, plr[p]._pHPBase);
+		auto result = api_call_hook_return("UseHealthPotion", api_get_player(p), prevHp, plr[p]._pHitPoints);
 		if (result.is<bool>() && !result.as<bool>()) {
 			plr[p]._pHPBase = prevHpBase;
 			plr[p]._pHitPoints = prevHp;
@@ -4043,7 +4047,7 @@ void __fastcall UseItem(int p, int Mid, int spl)
 
 		drawhpflag = TRUE;
 	} break;
-	case IMISC_MANA:
+	case IMISC_MANA: {
 		j = plr[p]._pMaxMana >> 8;
 		l = ((j >> 1) + random(40, j)) << 6;
 		if (plr[p]._pClass == PC_SORCERER)
@@ -4059,14 +4063,28 @@ void __fastcall UseItem(int p, int Mid, int spl)
 				plr[p]._pManaBase = plr[p]._pMaxManaBase;
 			drawmanaflag = TRUE;
 		}
-		break;
-	case IMISC_FULLMANA:
+
+		// Run a hook and prevent restoring if returned false
+		auto result = api_call_hook_return("UseManaPotion", api_get_player(p), prevMana, plr[p]._pMana);
+		if (result.is<bool>() && !result.as<bool>()) {
+			plr[p]._pManaBase = prevManaBase;
+			plr[p]._pMana = prevMana;
+		}
+	} break;
+	case IMISC_FULLMANA: {
 		if (!(plr[p]._pIFlags & ISPL_NOMANA)) {
 			plr[p]._pMana = plr[p]._pMaxMana;
 			plr[p]._pManaBase = plr[p]._pMaxManaBase;
 			drawmanaflag = TRUE;
 		}
-		break;
+
+		// Run a hook and prevent restoring if returned false
+		auto result = api_call_hook_return("UseManaPotion", api_get_player(p), prevMana, plr[p]._pMana);
+		if (result.is<bool>() && !result.as<bool>()) {
+			plr[p]._pManaBase = prevManaBase;
+			plr[p]._pMana = prevMana;
+		}
+	} break;
 	case IMISC_ELIXSTR:
 		ModifyPlrStr(p, 1);
 		break;

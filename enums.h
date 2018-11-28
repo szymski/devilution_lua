@@ -74,6 +74,7 @@ enum unique_base_item {
 	UITYPE_GRISWOLD    = 0x42,
 	UITYPE_LGTFORGE    = 0x43,
 	UITYPE_LAZSTAFF    = 0x44,
+	UITYPE_API_CUSTOM    = 0x45,
 	UITYPE_INVALID     = -1,
 };
 
@@ -268,6 +269,7 @@ enum item_cursor_graphic {
 	ICURS_COMPOSITE_STAFF             = 166,
 	ICURS_SHORT_BATTLE_BOW            = 167,
 	ICURS_GOLD                        = 168,
+	ICURS_API_CUSTOM			      = 169
 };
 
 enum _sfx_id {
@@ -2402,6 +2404,7 @@ enum item_misc_id {
 	IMISC_MAPOFDOOM = 0x2A,
 	IMISC_EAR       = 0x2B,
 	IMISC_SPECELIX  = 0x2C,
+	IMISC_API_CUSTOM = 0x2D,
 	IMISC_INVALID   = 0xFFFFFFFF,
 };
 
@@ -2421,6 +2424,7 @@ enum item_type {
 	ITYPE_RING   = 0xC,
 	ITYPE_AMULET = 0xD,
 	ITYPE_0E     = 0xE,
+	ITYPE_API_CUSTOM = 0xF,
 	ITYPE_NONE   = 0xFFFFFFFF,
 };
 
@@ -2658,6 +2662,7 @@ enum item_class {
 	ICLASS_MISC   = 3,
 	ICLASS_GOLD   = 4,
 	ICLASS_QUEST  = 5,
+	ICLASS_API_CUSTOM = 6,
 };
 
 enum item_drop_rate {

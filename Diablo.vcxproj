@@ -121,7 +121,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OutputFile>.\Source/WinDebug\Diablo.exe</OutputFile>
-      <AdditionalDependencies>DiabloUI/WinDebug/DiabloUI.lib;3rdParty/Storm/Source/WinDebug/Storm.lib;version.lib;3rdParty/lua/liblua.dll.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DiabloUI/WinDebug/DiabloUI.lib;3rdParty/Storm/Source/WinDebug/Storm.lib;version.lib;3rdParty/lua/lua51.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DataExecutionPrevention>false</DataExecutionPrevention>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>

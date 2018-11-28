@@ -48,6 +48,25 @@ struct api_PlayerStruct {
 		return ply._pMaxHP;
 	}
 
+	int getMana()
+	{
+		return ply._pMana;
+	}
+
+	void setMana(double value)
+	{
+		ply._pMana = value;
+		ply._pManaBase = value + ply._pMaxManaBase - ply._pMaxMana;
+
+		if (id == myplr)
+			drawmanaflag = true;
+	}
+
+	int getMaxMana()
+	{
+		return ply._pMaxMana;
+	}
+
 	int getGold()
 	{
 		return ply._pGold;
@@ -71,8 +90,13 @@ struct api_PlayerStruct {
 
 	void setPos(double x, double y)
 	{
+		SetPlayerOld(id);
 		ply.WorldX = x;
 		ply.WorldY = y;
+		FixPlayerLocation(id, ply._pdir);
+		FixPlrWalkTags(id);
+		dPlayer[plr[id].WorldX][plr[id].WorldY] = id + 1;
+
 	}
 
 	void kill()

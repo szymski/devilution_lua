@@ -134,7 +134,7 @@ extern const UItemStruct UniqueItemList[91];
 
 /* data */
 
-extern ItemDataStruct AllItemsList[157];
+extern ItemDataStruct AllItemsList[158];
 extern unsigned char ItemCAnimTbl[169];
 extern char *ItemDropStrs[35];
 extern unsigned char ItemAnimLs[35];

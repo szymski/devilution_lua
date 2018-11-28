@@ -1,29 +1,56 @@
-msg("Hello Lua world!")
+function string:split(delimiter)
+    local result = { }
+    local from  = 1
+    local delim_from, delim_to = string.find( self, delimiter, from  )
 
-hook.add("StartGame", "", function()
-    msg("Game started")
-    myPly = player.getLocalPlayer()
-end)
-
-a = 0
-hook.add("PostDrawGame", "", function()
-    if not myPly then
-        return
+    while delim_from do
+      table.insert( result, string.sub( self, from , delim_from-1 ) )
+      from  = delim_to + 1
+      delim_from, delim_to = string.find( self, delimiter, from  )
     end
 
-    draw.printGameStr(5, 15, "Lua API Test", COL_WHITE)
-    draw.printGameStr(5, 35, myPly:getLevel() == DTYPE_TOWN and "Town" or "Not town", COL_WHITE)
+    table.insert( result, string.sub( self, from  ) )
+
+    return result
+end
+
+function string:trim()
+    return (self:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+require("console")
+
+msg("Hello Lua world!")
+
+-- hook.add("StartGame", "", function()
+--     msg("Game started")
+--     myPly = player.getLocalPlayer()
+
+--     -- timer.simple(2, function()
+--     --     local x, y = myPly:getPos()
+--     --     item.dropRandomItemType(x, y, ITYPE_API_CUSTOM, nil, 2)
+--     -- end)
+-- end)
+
+-- a = 0
+-- hook.add("PostDrawGame", "", function()
+--     if not myPly then
+--         return
+--     end
+
+--     draw.printGameStr(5, 15, "Lua API Test", COL_WHITE)
+--     draw.printGameStr(5, 35, myPly:getLevel() == DTYPE_TOWN and "Town" or "Not town", COL_WHITE)
     
-    local x, y = mouse.getPos()
-    draw.printGameStr(5, 55, "" .. x .. " " .. y, COL_BLUE)
+--     local x, y = mouse.getPos()
+--     draw.printGameStr(5, 55, "" .. x .. " " .. y, COL_BLUE)
 
-    draw.printGameStr(5, 75, "Gold: " .. myPly:getGold(), COL_GOLD)
-    draw.printGameStr(5, 95, "Time: " .. timer.getTime(), COL_WHITE)
+--     draw.printGameStr(5, 75, "Gold: " .. myPly:getGold(), COL_GOLD)
+--     draw.printGameStr(5, 95, "Time: " .. timer.getTime(), COL_WHITE)
 
-    a = a + 1
+--     a = a + 1
 
-    -- draw.drawLine(0, 0, 300 + math.cos(a * 0.05) * 200, 300 + math.sin(a * 0.05) * 200, PAL8_ORANGE)
-end)
+--     -- draw.drawLine(0, 0, 300 + math.cos(a * 0.05) * 200, 300 + math.sin(a * 0.05) * 200, PAL8_ORANGE)
+-- end)
 
 -- nextSpawn = 0
 
@@ -75,11 +102,11 @@ end)
 
 local potions = { }
 
-hook.add("UseHealthPotion", "", function(ply, hp, baseHp, newHp, newBaseHp)
+hook.add("UseHealthPotion", "", function(ply, hp, newHp)
     local heal = newHp - hp
 
     if potions[ply] then
-        heal = heal + potions[ply].heal
+        heal = heal + (potions[ply].heal or 0)
     end
 
     potions[ply] = {
@@ -89,11 +116,29 @@ hook.add("UseHealthPotion", "", function(ply, hp, baseHp, newHp, newBaseHp)
     return false
 end)
 
+hook.add("UseManaPotion", "", function(ply, mana, newMana)
+    local toAdd = newMana - mana
+
+    msg("Mana to add: " .. toAdd)
+
+    if potions[ply] then
+        toAdd = toAdd + (potions[ply].mana or 0)
+    end
+
+    potions[ply] = {
+        mana = toAdd,
+    }
+
+    return false
+end)
+
 local tickHealPoints = 50
+local tickManaPoints = 50
 
 hook.add("Tick", "UpdatePotionHealing", function()
     for ply, tbl in pairs(potions) do
-        local healHp = math.min(tickHealPoints, tbl.heal)
+        local healHp = math.min(tickHealPoints, tbl.heal or 0)
+        local mana = math.min(tickManaPoints, tbl.mana or 0)
 
         if healHp > 0 then
             local newHp = ply:getHP() + healHp
@@ -105,7 +150,20 @@ hook.add("Tick", "UpdatePotionHealing", function()
             end
 
             ply:setHP(math.min(ply:getMaxHP(), newHp))
+        end
 
+        if mana > 0 then
+            local newMana = ply:getMana() + mana
+            msg("New mana: " .. newMana)
+            msg("Regen val: " .. mana)
+
+            if newMana > ply:getMaxMana() then
+                tbl.mana = 0
+            else
+                tbl.mana = tbl.mana - mana
+            end
+
+            ply:setMana(math.min(ply:getMaxMana(), newMana))
         end
 
     end
