@@ -20,10 +20,10 @@ end
 
 require("console")
 
-msg("Hello Lua world!")
+print("Hello Lua world!")
 
 -- hook.add("StartGame", "", function()
---     msg("Game started")
+--     print("Game started")
 --     myPly = player.getLocalPlayer()
 
 --     -- timer.simple(2, function()
@@ -71,18 +71,18 @@ msg("Hello Lua world!")
 --             local monster = monster.spawn(x, y, 0, 1, true)
 
 --             if monster then
---                 msg("Spawned monster " .. monster:getName())
+--                 print("Spawned monster " .. monster:getName())
 --             end
 --         end
 --     end
 -- end)
 
 -- hook.add("PlayerDie", "", function(ply)
---     msg(ply:getName() .. " died")
+--     print(ply:getName() .. " died")
 -- end)
 
 -- hook.add("LevelChange", "", function(ply, lvl)
---     msg(ply:getName() .. " changed level to " .. lvl)
+--     print(ply:getName() .. " changed level to " .. lvl)
 -- end)
 
 -- hook.add("SetPlayerSpeed", "", function(ply)
@@ -92,10 +92,10 @@ msg("Hello Lua world!")
 -- end)
 
 -- hook.add("InitMonster", "", function(monster)
---     msg("Initialized monster " .. monster:getName())
+--     print("Initialized monster " .. monster:getName())
 
 --     timer.simple(10, function()
---         msg("Killing " .. monster:getName())
+--         print("Killing " .. monster:getName())
 --         monster:kill()
 --     end)
 -- end)
@@ -119,7 +119,7 @@ end)
 hook.add("UseManaPotion", "", function(ply, mana, newMana)
     local toAdd = newMana - mana
 
-    msg("Mana to add: " .. toAdd)
+    print("Mana to add: " .. toAdd)
 
     if potions[ply] then
         toAdd = toAdd + (potions[ply].mana or 0)
@@ -154,8 +154,8 @@ hook.add("Tick", "UpdatePotionHealing", function()
 
         if mana > 0 then
             local newMana = ply:getMana() + mana
-            msg("New mana: " .. newMana)
-            msg("Regen val: " .. mana)
+            print("New mana: " .. newMana)
+            print("Regen val: " .. mana)
 
             if newMana > ply:getMaxMana() then
                 tbl.mana = 0
@@ -171,14 +171,14 @@ end)
 
 hook.add("MonsterKill", "", function(monster, ply)
     if ply then
-        msg(ply:getName() .. " killed " .. monster:getName())
+        print(ply:getName() .. " killed " .. monster:getName())
     else
-        msg(monster:getName() .. " got killed")
+        print(monster:getName() .. " got killed")
     end
 
     timer.simple(30, function()
-        msg(monster:getName())
-        msg("" .. monster:getHP())
+        print(monster:getName())
+        print("" .. monster:getHP())
     end)
 
     local x, y = monster:getPos()

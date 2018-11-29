@@ -130,8 +130,14 @@ void api_on_delete_monster(int id)
 
 void api_register_functions()
 {
-	lua["msg"] = [](std::string str) {
-		std::cout << str << std::endl;
+	lua["print"] = [](sol::variadic_args args) {
+		for (auto it = args.begin(); it != args.end(); it++) {
+			std::cout << lua["tostring"].call<std::string>((*it));
+			if (it + 1 != args.end())
+				std::cout << ", ";
+		}
+
+		std::cout << std::endl;
 	};
 
 	// Hook library
@@ -280,7 +286,15 @@ void api_register_functions()
 	lua["draw"] = draw;
 
 	draw["printGameStr"] = [](double x, double y, const char *str, sol::optional<double> color) {
-		PrintGameStr(x, y, (char *)str, color.value_or(COL_WHITE));
+		if (x >= 0 && y >= 0)
+			PrintGameStr(x, y, (char *)str, color.value_or(COL_WHITE));
+	};
+
+	draw["getTextWidth"] = [](const char* str) {
+		int width = 0;
+		for (const char *c = str; *c != 0; c++)
+			width += fontkern[fontframe[fontidx[*c]]] + 1;
+		return width;
 	};
 
 	draw["drawLine"] = [](double x0, double y0, double x1, double y1, double color) {

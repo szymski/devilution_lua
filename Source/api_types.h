@@ -103,6 +103,13 @@ struct api_PlayerStruct {
 	{
 		StartPlayerKill(id, 0);
 	}
+
+	std::string to_string()
+	{
+		std::ostringstream ss;
+		ss << "Player[" << id << "][" << ply._pName << "]";
+		return ss.str();
+	}
 };
 
 struct api_MonsterStruct {
@@ -180,6 +187,16 @@ struct api_MonsterStruct {
 			MonstStartKill(id, player->id, false);
 		else
 			MonstStartKill(id, -1, false);
+	}
+
+	std::string to_string()
+	{
+		if (!isValid())
+			return "Invalid monster";
+
+		std::ostringstream ss;
+		ss << "Monster[" << id << "][" << monster.mName << "]";
+		return ss.str();
 	}
 };
 
